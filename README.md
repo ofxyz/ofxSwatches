@@ -9,33 +9,28 @@ Classic, simple, swatches addon.
 
 ## Baked Features
 
-  -[ ] Save and load swatches to JSON format 
-  -[ ] Convert between types (Spot, RGB, CMYK)
-  -[ ] Delete/Update swatches
-  -[ ] Check if colour already exist before adding to swatches
-  -[ ] Add rich black control.
+  -[x] Spot colour flag  
+  -[x] Save and load swatches to JSON format  
+  -[ ] Rich black control  
 
 ## How to use
 
+```
     #import ofxSwatches.h
 
-    ofxSwatches swatches; //Or push to vector for multiple swatches libraries
-    swatches.setLibraryName("MyColorLib"); // Optional
+    ofxSwatches Swatches_Library;               // Or push to vector for multiple libraries and or groups
 
-    swatches.addCMYK({0,255,255,0}, "Red" /* Optional*/ );
-    swatches.addRGB({255,0,0,255}, "Red" /* Optional*/ );
-    swatches.addRGB({255,0,0}, "Red" /* Optional*/ );
+    swatches.addCMYK({0,255,255,0}, "MY 100");  // Name Optional, can be done later with setName("MY 100")
 
-> Note: Adding swatches with the same name will overwrite swatches with that name.
+    swatches.getRGB("MY 100");                  // {255,0,0,255}
+    swatches.getCMYK("MY 100");                 // {0,255,255,0}
 
-    // Returns glm::vec4
-    swatches.getRGB("Red");  //{255,0,0,255}
-    swatches.getCMYK("Red"); //{0,255,255,0}
+    // Pass into OF function
+    ofSetColor(swatches.get("MY 100"));         // Used as operator always returns RGB values
 
-    // Returns ofColor
-    swatches.getColor("Red");
-
+```
 
 ## Version History
 
- -[Version 0.1]() (14.10.24) Initial commit, hopefully not too many bugs.
+ -[Version 0.2]() (15.10.24) Usable now, but not yet how it should be
+ -[Version 0.1]() (14.10.24) Initial commit, hopefully not too many bugs

@@ -3,10 +3,13 @@
 
 //--------------------------------------------------------------
 void ofApp::setup(){
-	swatches.addCMYK({ 100,0,0,0 }, "Cyan");
-	swatches.addCMYK({ 0,100,0,0 }, "Magenta");
-	swatches.addCMYK({ 0,0,100,0 }, "Yellow");
-	swatches.addCMYK({ 0,0,0,100 }, "Keycolor");
+	swatches.addCMYK({   0,  0,  0,  0 }, "Paper");
+	swatches.addCMYK({ 100,  0,  0,  0 }, "Cyan");
+	swatches.addCMYK({   0,100,  0,  0 }, "Magenta");
+	swatches.addCMYK({   0,  0,100,  0 }, "Yellow");
+	swatches.addCMYK({   0,  0,  0,100 }, "Keycolor");
+
+	ofBackground(swatches.getColor("Paper"));
 }
 
 //--------------------------------------------------------------
@@ -16,11 +19,14 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
+
+	ofDrawBitmapString("Press [s] to save the swatches.", 25, 25);
+	
 	for (int i = 0; i < swatches.count(); i++) {
-		ofColor color = swatches.getColor(i);
-		ofSetColor(color);
+		ofSetColor(swatches.getColor(i));
 		ofDrawRectangle(100 + (i * 100), 100, 100, 100);
 	}
+
 }
 
 //--------------------------------------------------------------
