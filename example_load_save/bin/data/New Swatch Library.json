@@ -1,0 +1,41 @@
+{
+    "Swatches": [
+        {
+            "a": 255,
+            "b": 255,
+            "g": 255,
+            "name": "Cyan",
+            "r": 0,
+            "spot": false,
+            "type": 1
+        },
+        {
+            "a": 255,
+            "b": 255,
+            "g": 0,
+            "name": "Magenta",
+            "r": 255,
+            "spot": false,
+            "type": 1
+        },
+        {
+            "a": 255,
+            "b": 0,
+            "g": 255,
+            "name": "Yellow",
+            "r": 255,
+            "spot": false,
+            "type": 1
+        },
+        {
+            "a": 255,
+            "b": 0,
+            "g": 0,
+            "name": "Keycolor",
+            "r": 0,
+            "spot": false,
+            "type": 1
+        }
+    ],
+    "libName": "CMYK"
+}

@@ -1,0 +1,24 @@
+{
+  "audioBufferSize": 512,
+  "audioInputDevice": "",
+  "audioOutputDevice": "",
+  "audioSampleRate": 44100,
+  "backgroundAuto": true,
+  "bgA": 255,
+  "bgB": 24,
+  "bgG": 18,
+  "bgR": 18,
+  "circleRes": 22,
+  "depthTest": false,
+  "hideAllUI": true,
+  "lineWidth": 1.0,
+  "logLevel": 1,
+  "rulerScale": 1.0,
+  "rulerUnit": 0,
+  "smoothLighting": true,
+  "targetFps": 60,
+  "vsync": true,
+  "windowVisibility": {
+    "ofxkit.window.swatches": true
+  }
+}
