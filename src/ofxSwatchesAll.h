@@ -2,4 +2,5 @@
 
 #include "ofxSwatches.h"
 #include "panels/SwatchesPanel.h"
+#include "panels/DocumentPaintsPanel.h"
 #include "ecs/swatch_components.h"

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ColorTheory.h"
+#include "SwatchGradient.h"
 #include "ofMain.h"
 #include <string>
 #include <vector>
@@ -37,6 +38,10 @@ struct SwatchColor {
     /// Authoritative CMYK when type == CMYK (C,M,Y,K 0–100).
     glm::vec4 cmyk100 = glm::vec4(0.0f);
 
+    /// Solid (default) or portable gradient book entry.
+    SwatchKind kind = SwatchKind::Solid;
+    SwatchGradient gradient;
+
     SwatchColor() = default;
 
     SwatchColor(const ofColor& col, const std::string& n = "")
@@ -47,20 +52,33 @@ struct SwatchColor {
 
     static SwatchColor fromCMYK(float c, float m, float y, float k, const std::string& n = "");
     static SwatchColor fromHSB(float h, float s, float b, const std::string& n = "");
+    /// Two-stop linear black→white gradient (or custom colours via optional args).
+    static SwatchColor fromGradient(const std::string& n = "Gradient",
+                                    const glm::vec4& start = glm::vec4(0.f, 0.f, 0.f, 1.f),
+                                    const glm::vec4& end = glm::vec4(1.f, 1.f, 1.f, 1.f));
+
+    bool isGradient() const { return kind == SwatchKind::Gradient; }
+    bool isSolid() const { return kind == SwatchKind::Solid; }
+
+    /// Chip / DualColor preview — midpoint sample for gradients.
+    ofColor previewColor() const;
+    /// Refresh `color` from gradient stops (no-op for solids).
+    void refreshPreviewFromGradient();
 
     glm::vec4 getCMYK() const;
     glm::vec3 getHSB() const;
     std::string getDisplayName() const;
 
-    float getGreyValuePercent() const { return ofxSwatches::getGreyValuePercent(color); }
-    float getGreyValueSimple() const { return ofxSwatches::getGreyValueSimple(color); }
-    bool isNeutralGrey() const { return ofxSwatches::isNeutralGrey(color); }
-    ofColor toGreyEquivalent() const { return ofxSwatches::toGreyEquivalent(color); }
+    float getGreyValuePercent() const { return ofxSwatches::getGreyValuePercent(previewColor()); }
+    float getGreyValueSimple() const { return ofxSwatches::getGreyValueSimple(previewColor()); }
+    bool isNeutralGrey() const { return ofxSwatches::isNeutralGrey(previewColor()); }
+    ofColor toGreyEquivalent() const { return ofxSwatches::toGreyEquivalent(previewColor()); }
 
     SwatchColor withGreyValuePercent(float targetPercent) const;
 
-    operator ofColor() const { return color; }
+    operator ofColor() const { return previewColor(); }
 
+    /// Harmony helpers operate on solids only; gradients return empty / self.
     std::vector<SwatchColor> generateHarmony(ColorHarmony harmony) const;
     SwatchColor getComplementary() const;
     std::vector<SwatchColor> getTriadic() const;

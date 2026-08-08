@@ -1,10 +1,77 @@
 #include "SwatchJson.h"
 
 namespace ofxSwatches {
+namespace {
+
+ofJson stopToJson(const SwatchGradientStop& s)
+{
+    return ofJson{
+        {"position", s.position},
+        {"color", {s.color.x, s.color.y, s.color.z, s.color.w}},
+        {"intensity", s.intensity},
+    };
+}
+
+SwatchGradientStop stopFromJson(const ofJson& j)
+{
+    SwatchGradientStop s;
+    s.position  = j.value("position", 0.f);
+    s.intensity = j.value("intensity", 1.f);
+    if (j.contains("color") && j["color"].is_array() && j["color"].size() >= 3) {
+        const auto& c = j["color"];
+        s.color.x = c[0].get<float>();
+        s.color.y = c[1].get<float>();
+        s.color.z = c[2].get<float>();
+        s.color.w = c.size() >= 4 ? c[3].get<float>() : 1.f;
+    }
+    return s;
+}
+
+void gradientToJson(ofJson& j, const SwatchGradient& g)
+{
+    j["gradType"]   = static_cast<int>(g.type);
+    j["interp"]     = static_cast<int>(g.interp);
+    j["spread"]     = static_cast<int>(g.spread);
+    j["angle"]      = g.angle;
+    j["center"]     = {g.center.x, g.center.y};
+    j["innerRadius"] = g.innerRadius;
+    j["outerRadius"] = g.outerRadius;
+    j["numSteps"]   = g.numSteps;
+    ofJson stops = ofJson::array();
+    for (const auto& s : g.stops)
+        stops.push_back(stopToJson(s));
+    j["stops"] = std::move(stops);
+}
+
+void gradientFromJson(SwatchGradient& g, const ofJson& j)
+{
+    g.type   = static_cast<SwatchGradientType>(j.value("gradType", 0));
+    g.interp = static_cast<SwatchGradientInterpolation>(j.value("interp", 0));
+    g.spread = static_cast<SwatchGradientSpread>(j.value("spread", 0));
+    g.angle       = j.value("angle", 90.f);
+    g.innerRadius = j.value("innerRadius", 0.f);
+    g.outerRadius = j.value("outerRadius", 1.f);
+    g.numSteps    = j.value("numSteps", 0);
+    if (j.contains("center") && j["center"].is_array() && j["center"].size() >= 2) {
+        g.center.x = j["center"][0].get<float>();
+        g.center.y = j["center"][1].get<float>();
+    }
+    g.stops.clear();
+    if (j.contains("stops") && j["stops"].is_array()) {
+        for (const auto& sj : j["stops"])
+            g.stops.push_back(stopFromJson(sj));
+    }
+    if (g.stops.empty())
+        g = SwatchGradient{};
+    g.sortStops();
+}
+
+} // namespace
 
 void to_json(ofJson& j, const SwatchColor& color) {
     j = ofJson{
         {"name", color.name},
+        {"kind", color.kind == SwatchKind::Gradient ? "gradient" : "solid"},
         {"type", static_cast<int>(color.type)},
         {"spot", color.isSpotColor},
         {"spotInk", color.spotInkName},
@@ -19,13 +86,33 @@ void to_json(ofJson& j, const SwatchColor& color) {
         j["y"] = color.cmyk100.b;
         j["k"] = color.cmyk100.a;
     }
+    if (color.kind == SwatchKind::Gradient)
+        gradientToJson(j, color.gradient);
 }
 
 void from_json(const ofJson& j, SwatchColor& color) {
     try {
+        color = SwatchColor{};
         color.name = j.value("name", "");
         color.isSpotColor = j.value("spot", false);
         color.spotInkName = j.value("spotInk", "");
+
+        const std::string kindStr = j.value("kind", "solid");
+        color.kind = (kindStr == "gradient") ? SwatchKind::Gradient : SwatchKind::Solid;
+
+        if (color.kind == SwatchKind::Gradient) {
+            color.type = SwatchColorType::RGB;
+            gradientFromJson(color.gradient, j);
+            color.refreshPreviewFromGradient();
+            // Allow explicit preview RGBA override if present
+            if (j.contains("r")) {
+                color.color.r = j.value("r", color.color.r);
+                color.color.g = j.value("g", color.color.g);
+                color.color.b = j.value("b", color.color.b);
+                color.color.a = j.value("a", color.color.a);
+            }
+            return;
+        }
 
         const int typeInt = j.value("type", 0);
         const auto type = static_cast<SwatchColorType>(typeInt);
@@ -54,7 +141,7 @@ void from_json(const ofJson& j, SwatchColor& color) {
 ofJson libraryToJson(const SwatchLibrary& library) {
     ofJson settings;
     settings["libName"] = library.libraryName;
-    settings["version"] = 2;
+    settings["version"] = 3;
     settings["richBlack"] = {
         {"c", library.richBlack.c},
         {"m", library.richBlack.m},
@@ -104,11 +191,9 @@ bool loadLibrary(SwatchLibrary& library, const std::string& path) {
     if (inPath.empty()) {
         inPath = ofToDataPath(library.libraryName + ".json");
     }
-    if (!ofFile::doesFileExist(inPath)) {
-        ofLogVerbose("ofxSwatches") << "loadLibrary: no file at " << inPath << " (first run?)";
-        return false;
-    }
-    return libraryFromJson(library, ofLoadJson(inPath));
+    ofJson j = ofLoadJson(inPath);
+    if (j.is_null() || j.empty()) return false;
+    return libraryFromJson(library, j);
 }
 
 } // namespace ofxSwatches

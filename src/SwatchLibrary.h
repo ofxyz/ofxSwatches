@@ -25,6 +25,10 @@ struct SwatchLibrary {
         colors.push_back(SwatchColor::fromCMYK(c, m, y, k, name));
     }
 
+    void addGradient(const std::string& name = "Gradient") {
+        colors.push_back(SwatchColor::fromGradient(name));
+    }
+
     void removeColor(int index) {
         if (index >= 0 && index < (int)colors.size()) {
             colors.erase(colors.begin() + index);

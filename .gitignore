@@ -105,3 +105,15 @@ Desktop.ini
 *.log
 *.sql
 *.sqlite
+
+.vs/
+
+**/obj/
+
+dll/
+
+*.exe
+
+*.dll
+
+addons.lnk

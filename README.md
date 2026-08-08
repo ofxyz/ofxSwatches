@@ -11,9 +11,32 @@ Color swatch libraries for openFrameworks with CMYK support, grey value (perceiv
 - **Grey value** — WCAG relative luminance 0–100 %; neutral-grey detection; `toGreyEquivalent()`
 - **Contrast** — WCAG contrast ratio; `meetsContrastAA` / `meetsContrastAAA` helpers
 - **SwatchLibrary** — named palettes; add/remove/reorder; harmony generation
-- **JSON persistence** — `saveLibrary` / `loadLibrary`, format v2 with full CMYK round-trip
-- **SwatchesPanel** — Layers-style ImGui panel (requires ofxImGuiStyle)
+- **JSON persistence** — `saveLibrary` / `loadLibrary`, format **v3** (solids + portable gradients; v2 still loads)
+- **Gradient swatches** — book entries with stops/type/angle; chips draw ramps; apply via document paints
+- **SwatchesPanel** — Layers-style ImGui panel (requires ofxImGuiStyle); New gradient; Document Paints click-to-apply
+- **DualColorTarget** — Primary/Secondary slots hold solid or gradient; host labels Fill/Stroke or FG/BG
+- **Dual colour chips** — Illustrator/Photoshop-style stacked swatches (ramp when gradient)
 - **ECS** — `ecs::swatch_library_component` extends `SwatchLibrary` via ofxEnTTKit
+
+## Dual colour target
+
+```cpp
+ofxSwatches::DualColorTarget colors;
+colors.primaryLabel = "Fill";      // or "Foreground"
+colors.secondaryLabel = "Stroke";  // or "Background"
+colors.setActive(ofxSwatches::ColorSlot::Primary);
+
+// Toolbar / properties
+ofxSwatches::drawDualColorChips(colors, ImVec2(28, 28));
+
+// Swatches panel writes the active slot on click
+panel.setColorTarget(&colors);
+panel.setOnSwatchSelected([&](const ofxSwatches::SwatchColor& s) {
+    // Ensure a shared document paint, then assign fill/stroke entity
+    auto paint = ofxSwatches::ensureDocumentPaintFromSwatch(reg, s);
+    // … applyFillPaintToSelection / applyStrokePaintToSelection …
+});
+```
 
 ## Dependencies
 
@@ -78,6 +101,7 @@ ofxSwatches::SwatchLibrary lib("My Library");
 
 lib.addCMYK(0, 0, 0, 100, "Black");
 lib.addColor(ofColor::red, "Red");
+lib.addGradient("Fade");         // portable two-stop gradient swatch
 lib.count();                     // int
 lib.getColor(0);                 // SwatchColor* (nullptr if out of range)
 lib.getByName("Red");            // SwatchColor* (nullptr if not found)
@@ -93,16 +117,29 @@ lib.generateHarmonyFrom(0, ofxSwatches::ColorHarmony::Triadic);
 std::vector<int> matches = lib.findSameGreyValue(50.0f, 2.0f);
 ```
 
-## JSON format
+## JSON format (v3)
+
+`kind` defaults to `"solid"` when missing (v2 libraries load unchanged). Gradient entries carry stops and params; `r/g/b/a` remain a chip preview.
 
 ```json
 {
   "libName": "My Library",
-  "version": 2,
+  "version": 3,
   "richBlack": { "c": 60, "m": 40, "y": 40, "k": 100 },
   "Swatches": [
-    { "name": "Cyan", "type": 1, "c": 100, "m": 0, "y": 0, "k": 0,
-      "r": 0, "g": 255, "b": 255, "a": 255, "spot": false, "spotInk": "" }
+    { "kind": "solid", "name": "Cyan", "type": 1, "c": 100, "m": 0, "y": 0, "k": 0,
+      "r": 0, "g": 255, "b": 255, "a": 255, "spot": false, "spotInk": "" },
+    { "kind": "gradient", "name": "Fade", "type": 0,
+      "r": 128, "g": 128, "b": 128, "a": 255,
+      "gradType": 0, "interp": 0, "spread": 0, "angle": 90,
+      "center": [0.5, 0.5], "innerRadius": 0, "outerRadius": 1, "numSteps": 0,
+      "stops": [
+        { "position": 0, "color": [0, 0, 0, 1], "intensity": 1 },
+        { "position": 1, "color": [1, 1, 1, 1], "intensity": 1 }
+      ]
+    }
   ]
 }
 ```
+
+Applying a swatch in an editor: `ensureDocumentPaintFromSwatch` → assign the paint entity on the selection (do not always `createSolidPaint`).

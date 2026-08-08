@@ -9,9 +9,9 @@
 // Wraps ofxSwatches data types as EnTT components.
 // Requires ofxEnTTKit (for entt::entity / entt::registry).
 //
-// Gradients are NOT defined here. The canonical gradient/paint model lives in
-// ofxKit (ecs::gradient_component, ecs::solid_color_component, …). ofxSwatches
-// owns palettes; ofxKit owns paints.
+// Swatch books may hold solids and portable gradients (SwatchKind). Runtime
+// assignment still goes through ECS paint entities (ecs::solid_color_component /
+// ecs::gradient_component on the document paint library).
 // ============================================================================
 
 namespace ecs {

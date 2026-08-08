@@ -22,7 +22,7 @@ meta:
 	ADDON_URL = http://github.com/ofxyz/ofxSwatches
 
 common:
-	ADDON_DEPENDENCIES = ofxImGui ofxImGuiStyle ofxEnTT
+	ADDON_DEPENDENCIES = ofxImGui ofxImGuiStyle ofxEnTT ofxEnTTKit ofxDocumentKit
 	ADDON_INCLUDES += src
 	
 	# include search paths, this will be usually parsed from the file system

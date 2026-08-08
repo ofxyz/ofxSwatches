@@ -1,4 +1,5 @@
 #include "SwatchColor.h"
+#include "SwatchPaintConvert.h"
 #include <sstream>
 #include <cmath>
 
@@ -68,11 +69,43 @@ SwatchColor SwatchColor::fromHSB(float h, float s, float b, const std::string& n
     return result;
 }
 
+SwatchColor SwatchColor::fromGradient(const std::string& n,
+                                      const glm::vec4& start,
+                                      const glm::vec4& end) {
+    SwatchColor result;
+    result.kind = SwatchKind::Gradient;
+    result.name = n.empty() ? "Gradient" : n;
+    result.type = SwatchColorType::RGB;
+    result.gradient.stops.clear();
+    result.gradient.stops.emplace_back(0.f, start);
+    result.gradient.stops.emplace_back(1.f, end);
+    result.refreshPreviewFromGradient();
+    return result;
+}
+
+void SwatchColor::refreshPreviewFromGradient() {
+    if (kind != SwatchKind::Gradient) return;
+    const ecs::gradient_component g = toGradientComponent(*this);
+    const glm::vec4 c = g.sample(0.5f);
+    color = ofFloatColor(c.x, c.y, c.z, c.w);
+}
+
+ofColor SwatchColor::previewColor() const {
+    if (kind == SwatchKind::Gradient) {
+        const ecs::gradient_component g = toGradientComponent(*this);
+        const glm::vec4 c = g.sample(0.5f);
+        return ofFloatColor(c.x, c.y, c.z, c.w);
+    }
+    return color;
+}
+
 std::string SwatchColor::getDisplayName() const {
     if (!name.empty()) return name;
 
     std::stringstream ss;
-    if (type == SwatchColorType::CMYK) {
+    if (kind == SwatchKind::Gradient) {
+        ss << "Gradient";
+    } else if (type == SwatchColorType::CMYK) {
         const glm::vec4 cmyk = getCMYK();
         ss << "C" << (int)cmyk.r << " M" << (int)cmyk.g << " Y" << (int)cmyk.b << " K" << (int)cmyk.a;
     } else {
@@ -82,6 +115,7 @@ std::string SwatchColor::getDisplayName() const {
 }
 
 SwatchColor SwatchColor::withGreyValuePercent(float targetPercent) const {
+    if (kind == SwatchKind::Gradient) return *this;
     const float current = getGreyValuePercent();
     if (std::abs(current - targetPercent) < 0.01f) return *this;
 
@@ -108,6 +142,7 @@ SwatchColor SwatchColor::withGreyValuePercent(float targetPercent) const {
 }
 
 SwatchColor SwatchColor::shiftHue(float degrees) const {
+    if (kind == SwatchKind::Gradient) return *this;
     float h = color.getHue();
     const float s = color.getSaturation();
     const float b = color.getBrightness();
@@ -124,6 +159,7 @@ SwatchColor SwatchColor::shiftHue(float degrees) const {
 }
 
 SwatchColor SwatchColor::adjustSaturation(float factor) const {
+    if (kind == SwatchKind::Gradient) return *this;
     const float h = color.getHue();
     float s = color.getSaturation();
     const float b = color.getBrightness();
@@ -139,6 +175,7 @@ SwatchColor SwatchColor::adjustSaturation(float factor) const {
 }
 
 SwatchColor SwatchColor::adjustBrightness(float factor) const {
+    if (kind == SwatchKind::Gradient) return *this;
     const float h = color.getHue();
     const float s = color.getSaturation();
     float b = color.getBrightness();
@@ -154,6 +191,7 @@ SwatchColor SwatchColor::adjustBrightness(float factor) const {
 }
 
 SwatchColor SwatchColor::getComplementary() const {
+    if (kind == SwatchKind::Gradient) return *this;
     // Achromatic / near-grey: complementary is black ↔ white by luminance, not hue +180°.
     const float sat = color.getSaturation();
     if (ofxSwatches::isNeutralGrey(color) || sat < 8.f) {
@@ -176,6 +214,7 @@ SwatchColor SwatchColor::getComplementary() const {
 }
 
 std::vector<SwatchColor> SwatchColor::getTriadic() const {
+    if (kind == SwatchKind::Gradient) return {};
     std::vector<SwatchColor> results;
     SwatchColor c1 = shiftHue(120.0f);
     c1.name = name.empty() ? "Triadic 1" : name + " (Triadic 1)";
@@ -187,6 +226,7 @@ std::vector<SwatchColor> SwatchColor::getTriadic() const {
 }
 
 std::vector<SwatchColor> SwatchColor::getTetradic() const {
+    if (kind == SwatchKind::Gradient) return {};
     std::vector<SwatchColor> results;
     SwatchColor c1 = shiftHue(90.0f);
     c1.name = name.empty() ? "Tetradic 1" : name + " (Tetradic 1)";
@@ -201,6 +241,7 @@ std::vector<SwatchColor> SwatchColor::getTetradic() const {
 }
 
 std::vector<SwatchColor> SwatchColor::getAnalogous(float angle) const {
+    if (kind == SwatchKind::Gradient) return {};
     std::vector<SwatchColor> results;
     SwatchColor c1 = shiftHue(-angle);
     c1.name = name.empty() ? "Analogous 1" : name + " (Analogous 1)";
@@ -212,6 +253,7 @@ std::vector<SwatchColor> SwatchColor::getAnalogous(float angle) const {
 }
 
 std::vector<SwatchColor> SwatchColor::getSplitComplementary() const {
+    if (kind == SwatchKind::Gradient) return {};
     std::vector<SwatchColor> results;
     SwatchColor c1 = shiftHue(150.0f);
     c1.name = name.empty() ? "Split Comp 1" : name + " (Split Comp 1)";
@@ -223,6 +265,7 @@ std::vector<SwatchColor> SwatchColor::getSplitComplementary() const {
 }
 
 std::vector<SwatchColor> SwatchColor::getMonochromatic(int count) const {
+    if (kind == SwatchKind::Gradient) return {};
     std::vector<SwatchColor> results;
     const float h = color.getHue();
     const float s = color.getSaturation();
