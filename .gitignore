@@ -117,3 +117,5 @@ dll/
 *.dll
 
 addons.lnk
+
+*.user
