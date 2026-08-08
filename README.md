@@ -40,9 +40,19 @@ panel.setOnSwatchSelected([&](const ofxSwatches::SwatchColor& s) {
 
 ## Dependencies
 
-- Core: openFrameworks
-- Panel: ofxImGui, ofxImGuiStyle, ofxEnTT (entity ids in panel callbacks)
-- Kit apps: ofxEnTTKit, ofxKit
+From `addon_config.mk` (Windows and Linux):
+
+- ofxImGui, ofxImGuiStyle
+- ofxEnTT, **ofxEnTTKit**, **ofxDocumentKit** (document paints / ECS swatch library)
+
+## `operator ofColor()` / `previewColor()`
+
+`SwatchColor` converts to `ofColor` via **`previewColor()`**, not the raw solid channel alone:
+
+- **Solid** swatches → the stored RGB colour.
+- **Gradient** swatches → a midpoint (chip preview) colour suitable for UI and contrast helpers.
+
+Use `previewColor()` explicitly when you need the same value as the conversion operator. Grey-value / contrast helpers also use `previewColor()`.
 
 ## Quick start
 
